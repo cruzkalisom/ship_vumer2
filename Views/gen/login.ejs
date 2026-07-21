@@ -1,682 +1,89 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ÓRBITA // Acesso ao Simulador</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --void: #0b0b18;
-    --void-deep: #07070f;
-    --surface: #1e1b3a;
-    --surface-soft: #171530;
-    --surface-line: rgba(201, 169, 255, 0.14);
-    --nebula: #6c4fe0;
-    --ion: #4a6cf7;
-    --plasma: #c9a9ff;
-    --starlight: #edebff;
-    --mist: #9c96c4;
-    --status-ok: #4fe3c1;
-    --status-err: #ff6b8b;
-    --radius: 14px;
-    --font-display: 'Syne', sans-serif;
-    --font-body: 'Manrope', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
-  }
-
-  *{ box-sizing: border-box; }
-
-  html, body{
-    margin:0;
-    padding:0;
-    min-height:100%;
-    background: var(--void);
-    color: var(--starlight);
-    font-family: var(--font-body);
-  }
-
-  body{
-    display:flex;
-    min-height:100vh;
-    position:relative;
-    overflow-x:hidden;
-  }
-
-  a{ color: var(--plasma); }
-
-  /* focus visibility */
-  a:focus-visible,
-  button:focus-visible,
-  input:focus-visible,
-  [tabindex]:focus-visible{
-    outline: 2px solid var(--plasma);
-    outline-offset: 3px;
-    border-radius: 4px;
-  }
-
-  /* ---------- starfield ---------- */
-  .starfield{
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background: radial-gradient(ellipse at 20% 20%, rgba(108,79,224,0.16), transparent 55%),
-                radial-gradient(ellipse at 85% 75%, rgba(74,108,247,0.14), transparent 50%),
-                var(--void-deep);
-  }
-  .star{
-    position:absolute;
-    width: 2px;
-    height: 2px;
-    background: var(--starlight);
-    border-radius: 50%;
-    opacity: 0.55;
-  }
-  .star.big{ width:3px; height:3px; opacity:0.85; box-shadow: 0 0 4px rgba(237,235,255,0.7); }
-
-  @media (prefers-reduced-motion: no-preference){
-    .star.twinkle{ animation: twinkle 5s ease-in-out infinite; }
-  }
-  @keyframes twinkle{
-    0%, 100% { opacity: 0.25; }
-    50% { opacity: 0.9; }
-  }
-
-  /* ---------- layout shell ---------- */
-  main.shell{
-    position: relative;
-    z-index: 1;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-    width: 100%;
-    min-height: 100vh;
-  }
-
-  /* ---------- visual / mission panel ---------- */
-  .visual-panel{
-    position: relative;
-    display:flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: clamp(2rem, 5vw, 5rem);
-    border-right: 1px solid var(--surface-line);
-    overflow: hidden;
-  }
-
-  .eyebrow{
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--plasma);
-    margin: 0 0 1.25rem;
-  }
-
-  .visual-panel h1{
-    font-family: var(--font-display);
-    font-weight: 800;
-    font-size: clamp(1.9rem, 3.4vw, 2.9rem);
-    line-height: 1.12;
-    margin: 0 0 1rem;
-    max-width: 18ch;
-  }
-
-  .visual-panel p.lede{
-    font-size: 1rem;
-    line-height: 1.6;
-    color: var(--mist);
-    max-width: 40ch;
-    margin: 0 0 2.5rem;
-  }
-
-  /* orbital signature element */
-  .orbit-system{
-    position: relative;
-    width: min(320px, 70vw);
-    height: min(320px, 70vw);
-    margin: 0.5rem 0 2.5rem;
-  }
-
-  .orbit-glow{
-    position:absolute;
-    inset: -40px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(108,79,224,0.35), transparent 70%);
-    filter: blur(6px);
-  }
-
-  .orbit-ring{
-    position:absolute;
-    top:50%; left:50%;
-    border: 1px solid var(--surface-line);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-  }
-  .orbit-ring.r1{ width: 100%; height: 100%; }
-  .orbit-ring.r2{ width: 68%; height: 68%; border-color: rgba(74,108,247,0.18); }
-  .orbit-ring.r3{ width: 38%; height: 38%; border-color: rgba(201,169,255,0.16); }
-
-  .orbit-core{
-    position:absolute;
-    top:50%; left:50%;
-    width: 14%;
-    height: 14%;
-    transform: translate(-50%,-50%);
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, var(--plasma), var(--nebula) 60%, transparent 100%);
-    box-shadow: 0 0 24px rgba(108,79,224,0.7);
-  }
-
-  .orbit-track{
-    position:absolute;
-    top:50%; left:50%;
-    width: 100%;
-    height: 100%;
-    transform: translate(-50%,-50%);
-  }
-  .orbit-track.t1{ width:100%; height:100%; }
-  .orbit-track.t2{ width:68%; height:68%; }
-
-  .ship{
-    position:absolute;
-    top: 0;
-    left: 50%;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--starlight);
-    transform: translate(-50%,-50%);
-    box-shadow: 0 0 8px 2px rgba(237,235,255,0.65);
-  }
-  .orbit-track.t2 .ship{
-    background: var(--status-ok);
-    box-shadow: 0 0 8px 2px rgba(79,227,193,0.6);
-  }
-
-  @media (prefers-reduced-motion: no-preference){
-    .orbit-track.t1{ animation: spin 18s linear infinite; }
-    .orbit-track.t2{ animation: spin 11s linear infinite reverse; }
-  }
-  @keyframes spin{ to{ transform: translate(-50%,-50%) rotate(360deg); } }
-
-  .telemetry{
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
-    font-family: var(--font-mono);
-    font-size: 0.78rem;
-    color: var(--mist);
-  }
-  .telemetry li{ display:flex; align-items:center; gap:0.6rem; }
-  .telemetry .dot{
-    width:6px; height:6px; border-radius:50%;
-    background: var(--status-ok);
-    box-shadow: 0 0 6px var(--status-ok);
-    flex-shrink:0;
-  }
-  @media (prefers-reduced-motion: no-preference){
-    .telemetry .dot{ animation: pulse 2.4s ease-in-out infinite; }
-  }
-  @keyframes pulse{
-    0%, 100%{ opacity:1; }
-    50%{ opacity:0.35; }
-  }
-
-  /* ---------- auth panel ---------- */
-  .auth-panel{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding: clamp(1.5rem, 4vw, 3rem);
-  }
-
-  .auth-card{
-    width: 100%;
-    max-width: 420px;
-  }
-
-  .brand{
-    display:flex;
-    align-items:center;
-    gap: 0.65rem;
-    margin-bottom: 2rem;
-  }
-  .brand svg{ width: 30px; height: 30px; flex-shrink:0; }
-  .brand span{
-    font-family: var(--font-display);
-    font-weight: 800;
-    font-size: 1.25rem;
-    letter-spacing: 0.03em;
-  }
-
-  h2.card-title{
-    font-family: var(--font-display);
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin: 0 0 0.4rem;
-  }
-  .card-sub{
-    color: var(--mist);
-    font-size: 0.92rem;
-    margin: 0 0 1.75rem;
-  }
-
-  /* mode toggle */
-  .mode-toggle{
-    position: relative;
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    background: var(--surface-soft);
-    border: 1px solid var(--surface-line);
-    border-radius: 999px;
-    padding: 4px;
-    margin-bottom: 2rem;
-  }
-  .toggle-thumb{
-    position:absolute;
-    top:4px; left:4px;
-    width: calc(50% - 4px);
-    height: calc(100% - 8px);
-    border-radius: 999px;
-    background: linear-gradient(135deg, var(--nebula), var(--ion));
-    transition: transform 0.3s cubic-bezier(.4,0,.2,1);
-    z-index: 0;
-  }
-  .mode-toggle[data-active="signup"] .toggle-thumb{
-    transform: translateX(100%);
-  }
-  .toggle-btn{
-    position: relative;
-    z-index: 1;
-    background: transparent;
-    border: none;
-    color: var(--mist);
-    font-family: var(--font-body);
-    font-weight: 600;
-    font-size: 0.9rem;
-    padding: 0.65rem 0.5rem;
-    border-radius: 999px;
-    cursor: pointer;
-    transition: color 0.25s ease;
-  }
-  .toggle-btn[aria-selected="true"]{ color: var(--starlight); }
-
-  /* form */
-  .auth-form{ display:flex; flex-direction:column; gap: 1.15rem; }
-  .field{ display:flex; flex-direction:column; gap:0.45rem; }
-  .field label{
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--mist);
-  }
-  .field label .req{ color: var(--plasma); margin-left:2px; }
-
-  .field input{
-    background: var(--surface);
-    border: 1px solid var(--surface-line);
-    border-radius: 10px;
-    padding: 0.75rem 0.9rem;
-    color: var(--starlight);
-    font-family: var(--font-body);
-    font-size: 0.95rem;
-  }
-  .field input::placeholder{ color: #6b6690; }
-  .field input:focus{ border-color: var(--plasma); }
-  .field input:user-invalid{ border-color: var(--status-err); }
-
-  .field-error{
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    color: var(--status-err);
-    min-height: 1em;
-  }
-
-  .row-between{
-    display:flex;
-    align-items:center;
-    justify-content: space-between;
-    font-size: 0.85rem;
-    color: var(--mist);
-  }
-  .checkbox{
-    display:flex;
-    align-items:center;
-    gap: 0.5rem;
-  }
-  .checkbox input{ accent-color: var(--nebula); width:15px; height:15px; }
-
-  .submit-btn{
-    margin-top: 0.25rem;
-    border: none;
-    border-radius: 10px;
-    padding: 0.85rem 1rem;
-    font-family: var(--font-body);
-    font-weight: 700;
-    font-size: 0.95rem;
-    color: var(--void-deep);
-    background: linear-gradient(135deg, var(--plasma), var(--ion));
-    cursor: pointer;
-    transition: filter 0.2s ease, transform 0.2s ease;
-  }
-  .submit-btn:hover{ filter: brightness(1.08); }
-  .submit-btn:active{ transform: translateY(1px); }
-
-  .status-line{
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.06em;
-    color: var(--mist);
-    text-align:center;
-    margin-top: 0.35rem;
-    min-height: 1.2em;
-  }
-  .status-line[data-state="validating"]{ color: var(--plasma); }
-  .status-line[data-state="ok"]{ color: var(--status-ok); }
-
-  .switch-note{
-    margin-top: 1.75rem;
-    text-align:center;
-    font-size: 0.88rem;
-    color: var(--mist);
-  }
-  .switch-note button{
-    background:none; border:none; padding:0;
-    color: var(--plasma);
-    font-weight: 600;
-    cursor:pointer;
-    font-size: inherit;
-    font-family: inherit;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-
-  [hidden]{ display:none !important; }
-
-  /* ---------- responsive ---------- */
-  @media (max-width: 900px){
-    main.shell{
-      grid-template-columns: 1fr;
-    }
-    .visual-panel{
-      border-right:none;
-      border-bottom: 1px solid var(--surface-line);
-      padding: 2.5rem 1.5rem 2rem;
-      align-items:center;
-      text-align:center;
-    }
-    .visual-panel h1{ max-width: none; }
-    .visual-panel p.lede{ max-width:none; margin-left:auto; margin-right:auto; }
-    .orbit-system{ display:none; }
-    .telemetry{ align-items:center; }
-    .auth-panel{ padding: 2rem 1.25rem 3rem; }
-  }
-
-  @media (max-width: 400px){
-    .card-title{ font-size:1.3rem; }
-  }
-</style>
-</head>
-<body>
-
-  <div class="starfield" aria-hidden="true" id="starfield"></div>
-
-  <main class="shell">
-    <!-- Painel de missão / identidade visual -->
-    <section class="visual-panel" aria-hidden="true">
-      <p class="eyebrow">Controle de missão // acesso</p>
-      <h1>Sua jornada pelo cosmos começa aqui.</h1>
-      <p class="lede">Entre na cabine de comando do simulador. Trace rotas, calibre sistemas e explore órbitas — tudo começa com uma credencial válida.</p>
-
-      <div class="orbit-system">
-        <div class="orbit-glow"></div>
-        <div class="orbit-ring r1"></div>
-        <div class="orbit-ring r2"></div>
-        <div class="orbit-ring r3"></div>
-        <div class="orbit-track t1"><div class="ship"></div></div>
-        <div class="orbit-track t2"><div class="ship"></div></div>
-        <div class="orbit-core"></div>
-      </div>
-
-      <ul class="telemetry">
-        <li><span class="dot"></span> SISTEMA// ONLINE</li>
-        <li><span class="dot"></span> ÓRBITA// ESTÁVEL</li>
-        <li><span class="dot"></span> CANAL DE ACESSO// SEGURO</li>
-      </ul>
-    </section>
-
-    <!-- Painel de acesso -->
-    <section class="auth-panel">
-      <div class="auth-card">
-        <div class="brand">
-          <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="16" cy="16" r="15" stroke="#C9A9FF" stroke-width="1.2" opacity="0.5"/>
-            <ellipse cx="16" cy="16" rx="15" ry="6" stroke="#4A6CF7" stroke-width="1.2" opacity="0.6"/>
-            <circle cx="16" cy="16" r="4.2" fill="#6C4FE0"/>
-          </svg>
-          <span>ÓRBITA</span>
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>SHIPVUMER | Entrar</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+    <!-- FONTS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css" integrity="sha256-tXJfXfp6Ewt1ilPzLDtQnJV4hclT9XuaZUKyUvmyr+Q=" crossorigin="anonymous" media="print" onload="this.media = 'all'" />
+    <!-- BOOTSTRAP -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" crossorigin="anonymous" />
+    <!-- ADMINLTE -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@4.0.0/dist/css/adminlte.min.css" />
+  </head>
+  <!--end::Head-->
+  <!--begin::Body-->
+  <body class="login-page bg-body-secondary">
+    <div class="login-box">
+      <div class="card card-outline card-primary">
+        <div class="card-header">
+          <a
+            href="/admin"
+            class="text-center link-offset-2 link-opacity-100 link-opacity-50-hover"
+          >
+            <h1 class="mb-0"><b>SHIP</b>VUMER</h1>
+          </a>
         </div>
+        <div class="card-body login-card-body">
+          <p class="login-box-msg">Digite suas credenciais para acesso à base</p>
 
-        <h2 class="card-title" id="form-heading">Painel de acesso</h2>
-        <p class="card-sub" id="form-sub">Informe suas credenciais para entrar na simulação.</p>
-
-        <div class="mode-toggle" data-active="login" role="tablist" aria-label="Selecionar modo de acesso">
-          <span class="toggle-thumb"></span>
-          <button type="button" role="tab" id="tab-login" aria-selected="true" aria-controls="panel-login" class="toggle-btn">Entrar</button>
-          <button type="button" role="tab" id="tab-signup" aria-selected="false" aria-controls="panel-signup" tabindex="-1" class="toggle-btn">Cadastrar</button>
-        </div>
-
-        <!-- LOGIN -->
-        <div id="panel-login" role="tabpanel" aria-labelledby="tab-login">
-          <form class="auth-form" id="login-form" novalidate>
-            <div class="field">
-              <label for="login-email">E-mail<span class="req">*</span></label>
-              <input type="email" id="login-email" name="email" placeholder="voce@estacao.com" autocomplete="email" required>
-              <p class="field-error" data-error-for="login-email"></p>
+          <form id="form-login">
+            <div class="input-group mb-1">
+              <div class="form-floating">
+                <input required id="email" type="email" class="form-control" value="" placeholder="" />
+                <label for="email">E-mail</label>
+              </div>
+              <div class="input-group-text">
+                <span class="bi bi-envelope"></span>
+              </div>
             </div>
-
-            <div class="field">
-              <label for="login-password">Senha<span class="req">*</span></label>
-              <input type="password" id="login-password" name="password" placeholder="••••••••" autocomplete="current-password" minlength="6" required>
-              <p class="field-error" data-error-for="login-password"></p>
+            <div class="input-group mb-1">
+              <div class="form-floating">
+                <input required id="password" type="password" class="form-control" placeholder="" />
+                <label for="password">Senha</label>
+              </div>
+              <div class="input-group-text">
+                <span class="bi bi-lock-fill"></span>
+              </div>
             </div>
-
-            <div class="row-between">
-              <label class="checkbox">
-                <input type="checkbox" id="remember" name="remember">
-                Manter-me conectado
-              </label>
-              <a href="#">Esqueceu a senha?</a>
+            <!--begin::Row-->
+            <div class="row">
+              <div class="col-8 d-inline-flex align-items-center">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" />
+                  <label class="form-check-label" for="flexCheckDefault"> Manter-me conectado </label>
+                </div>
+              </div>
+              <!-- /.col -->
+              <div class="col-4">
+                <div class="d-grid gap-2">
+                  <button type="submit" class="btn btn-primary">Entrar</button>
+                </div>
+              </div>
+              <!-- /.col -->
             </div>
-
-            <button type="submit" class="submit-btn">Iniciar sessão</button>
-            <p class="status-line" data-status role="status" aria-live="polite">STATUS// AGUARDANDO CREDENCIAIS</p>
+            <!--end::Row-->
           </form>
+
+          <p class="mb-1">
+            <a href="/forgot-password">Ensqueci minha senha</a>
+          </p>
+          <p class="mb-0">
+            <a href="/register" class="text-center"> Registrar minha base </a>
+          </p>
         </div>
-
-        <!-- CADASTRO -->
-        <div id="panel-signup" role="tabpanel" aria-labelledby="tab-signup" hidden>
-          <form class="auth-form" id="signup-form" novalidate>
-            <div class="field">
-              <label for="signup-name">Nome completo<span class="req">*</span></label>
-              <input type="text" id="signup-name" name="name" placeholder="Seu nome" autocomplete="name" required>
-              <p class="field-error" data-error-for="signup-name"></p>
-            </div>
-
-            <div class="field">
-              <label for="signup-email">E-mail<span class="req">*</span></label>
-              <input type="email" id="signup-email" name="email" placeholder="voce@estacao.com" autocomplete="email" required>
-              <p class="field-error" data-error-for="signup-email"></p>
-            </div>
-
-            <div class="field">
-              <label for="signup-password">Senha<span class="req">*</span></label>
-              <input type="password" id="signup-password" name="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" minlength="6" required>
-              <p class="field-error" data-error-for="signup-password"></p>
-            </div>
-
-            <div class="field">
-              <label for="signup-confirm">Confirmar senha<span class="req">*</span></label>
-              <input type="password" id="signup-confirm" name="confirm" placeholder="Repita a senha" autocomplete="new-password" minlength="6" required>
-              <p class="field-error" data-error-for="signup-confirm"></p>
-            </div>
-
-            <label class="checkbox" style="font-size:0.85rem; color:var(--mist);">
-              <input type="checkbox" id="terms" name="terms" required>
-              Concordo com os termos da simulação
-            </label>
-
-            <button type="submit" class="submit-btn">Criar conta</button>
-            <p class="status-line" data-status role="status" aria-live="polite">STATUS// AGUARDANDO DADOS</p>
-          </form>
-        </div>
-
-        <p class="switch-note" id="switch-note">
-          Ainda não tem acesso? <button type="button" id="go-signup">Cadastre-se</button>
-        </p>
+        <!-- /.login-card-body -->
       </div>
-    </section>
-  </main>
+    </div>
+    <!-- /.login-box -->
 
-<script>
-  // ---------- starfield generation ----------
-  (function generateStars(){
-    const field = document.getElementById('starfield');
-    const count = window.innerWidth < 700 ? 60 : 110;
-    const frag = document.createDocumentFragment();
-    for(let i=0; i<count; i++){
-      const s = document.createElement('span');
-      s.className = 'star' + (Math.random() > 0.85 ? ' big' : '') + (Math.random() > 0.5 ? ' twinkle' : '');
-      s.style.top = Math.random()*100 + 'vh';
-      s.style.left = Math.random()*100 + 'vw';
-      s.style.animationDelay = (Math.random()*5) + 's';
-      frag.appendChild(s);
-    }
-    field.appendChild(frag);
-  })();
-
-  // ---------- tab / mode toggle ----------
-  const toggle = document.querySelector('.mode-toggle');
-  const tabLogin = document.getElementById('tab-login');
-  const tabSignup = document.getElementById('tab-signup');
-  const panelLogin = document.getElementById('panel-login');
-  const panelSignup = document.getElementById('panel-signup');
-  const formHeading = document.getElementById('form-heading');
-  const formSub = document.getElementById('form-sub');
-  const switchNote = document.getElementById('switch-note');
-
-  function setMode(mode){
-    const isSignup = mode === 'signup';
-    toggle.dataset.active = mode;
-
-    tabLogin.setAttribute('aria-selected', String(!isSignup));
-    tabSignup.setAttribute('aria-selected', String(isSignup));
-    tabLogin.tabIndex = isSignup ? -1 : 0;
-    tabSignup.tabIndex = isSignup ? 0 : -1;
-
-    panelLogin.hidden = isSignup;
-    panelSignup.hidden = !isSignup;
-
-    formHeading.textContent = isSignup ? 'Criar credencial' : 'Painel de acesso';
-    formSub.textContent = isSignup
-      ? 'Registre-se para embarcar na simulação.'
-      : 'Informe suas credenciais para entrar na simulação.';
-
-    switchNote.innerHTML = isSignup
-      ? 'Já possui acesso? <button type="button" id="go-login">Entrar</button>'
-      : 'Ainda não tem acesso? <button type="button" id="go-signup">Cadastre-se</button>';
-
-    bindSwitchNote();
-  }
-
-  function bindSwitchNote(){
-    const goSignup = document.getElementById('go-signup');
-    const goLogin = document.getElementById('go-login');
-    if(goSignup) goSignup.addEventListener('click', () => { setMode('signup'); tabSignup.focus(); });
-    if(goLogin) goLogin.addEventListener('click', () => { setMode('login'); tabLogin.focus(); });
-  }
-  bindSwitchNote();
-
-  tabLogin.addEventListener('click', () => setMode('login'));
-  tabSignup.addEventListener('click', () => setMode('signup'));
-
-  [tabLogin, tabSignup].forEach(tab => {
-    tab.addEventListener('keydown', (e) => {
-      if(e.key === 'ArrowLeft' || e.key === 'ArrowRight'){
-        e.preventDefault();
-        const next = toggle.dataset.active === 'login' ? 'signup' : 'login';
-        setMode(next);
-        (next === 'login' ? tabLogin : tabSignup).focus();
-      }
-    });
-  });
-
-  // ---------- validation + fake submit flow ----------
-  function validateForm(form){
-    let valid = true;
-    form.querySelectorAll('input[required], input[minlength]').forEach(input => {
-      const errorEl = form.querySelector(`[data-error-for="${input.id}"]`);
-      let message = '';
-
-      if(input.validity.valueMissing){
-        message = 'ERRO// CAMPO OBRIGATÓRIO';
-      } else if(input.type === 'email' && input.validity.typeMismatch){
-        message = 'ERRO// FORMATO DE E-MAIL INVÁLIDO';
-      } else if(input.validity.tooShort){
-        message = 'ERRO// MÍNIMO DE 6 CARACTERES';
-      }
-
-      if(errorEl) errorEl.textContent = message;
-      if(message) valid = false;
-    });
-
-    // confirmação de senha (cadastro)
-    const pass = form.querySelector('#signup-password');
-    const confirm = form.querySelector('#signup-confirm');
-    if(pass && confirm){
-      const errorEl = form.querySelector('[data-error-for="signup-confirm"]');
-      if(confirm.value && confirm.value !== pass.value){
-        if(errorEl) errorEl.textContent = 'ERRO// AS SENHAS NÃO COINCIDEM';
-        valid = false;
-      }
-    }
-
-    return valid;
-  }
-
-  function wireForm(formId){
-    const form = document.getElementById(formId);
-    const status = form.querySelector('[data-status]');
-
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      form.querySelectorAll('.field-error').forEach(el => el.textContent = '');
-
-      if(!validateForm(form)){
-        status.dataset.state = 'error';
-        status.textContent = 'STATUS// CORRIJA OS CAMPOS DESTACADOS';
-        return;
-      }
-
-      status.dataset.state = 'validating';
-      status.textContent = 'STATUS// VALIDANDO CREDENCIAIS...';
-
-      setTimeout(() => {
-        status.dataset.state = 'ok';
-        status.textContent = 'STATUS// ACESSO CONCEDIDO';
-      }, 1100);
-    });
-  }
-
-  wireForm('login-form');
-  wireForm('signup-form');
-</script>
-</body>
+    <!-- JQUERY -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/4.0.0/jquery.min.js"></script>
+    <!-- BOOTSTRAP-->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.min.js" crossorigin="anonymous" ></script>
+    <!-- ADMINLTE -->
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@4.0.0/dist/js/adminlte.min.js"></script>
+    <!-- FUNCTIONS -->
+    <script src="js/gen/login.js"></script>
+  </body>
 </html>

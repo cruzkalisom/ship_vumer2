@@ -1,6 +1,16 @@
 {
     "server": {
         "port": 50553,
-        "version": "0.0.2"
+        "version": "0.0.3"
+    },
+    "db": {
+        "host": "localhost",
+        "user": "root",
+        "password": "VumerKalis003",
+        "database": "ship_vumer"
+    },
+    "session": {
+        "key": "vumer.ship_vumer",
+        "secret": "lkhasdoidik032op/~lfj98p23yhu34n3[p-3[i43ihion"
     }
 }

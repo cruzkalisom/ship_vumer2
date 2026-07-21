@@ -1,0 +1,3 @@
+Criar a rota /admin (painel administrativo)
+Criar a rota /terms (Termos de uso do sistema)
+Criar a rota /forgot-password (Esqueceu a senha)
