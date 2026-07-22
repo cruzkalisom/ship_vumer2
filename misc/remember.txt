@@ -1,0 +1,6 @@
+Criar a rota /admin (painel administrativo)
+Criar a rota /terms (Termos de uso do sistema)
+Criar a rota /forgot-password (Esqueceu a senha)
+Criar função para excluir os tokens que não estão marcados com remember da tabela user_sessions
+
+Criar organizações: Membros podem criar organizações, além das padrões que existem. Cada organização pode dominar coordenadas na rede e cobrar taxas para quem para nelas

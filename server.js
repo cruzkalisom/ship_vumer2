@@ -10,6 +10,7 @@ const genRoutes = require('./routes/gen/gen')
 const phoneInfoRoutes = require('./routes/Phone/getinfo')
 const loginRoutes = require('./routes/gen/login')
 const registerRoutes = require('./routes/gen/register')
+const adminRoutes = require('./routes/base/admin')
 
 const port = config.server.port
 
@@ -42,6 +43,7 @@ app.use(express.static(__dirname + '/public'))
 app.use(BodyParser.urlencoded({extended: false}))
 app.use(BodyParser.json())
 
+app.use('/admin', adminRoutes)
 app.use('/register', registerRoutes)
 app.use('/login', loginRoutes)
 app.use('/', genRoutes)
